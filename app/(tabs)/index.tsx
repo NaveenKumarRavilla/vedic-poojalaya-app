@@ -1,31 +1,39 @@
-import { StyleSheet } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CategoryTile, ProductCard, SearchField, SectionHeading } from '../../src/components';
+import { categories, products } from '../../src/data/catalog';
+import { images } from '../../src/data/images';
+import { colors, radius, spacing } from '../../src/theme';
+import { useCartStore } from '../../src/store/cartStore';
+import { useWishlistStore } from '../../src/store/wishlistStore';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+const slides = [
+ { eyebrow: 'CURATED FOR YOUR HOME', title: 'Everything you need\nfor every pooja', copy: 'Thoughtfully selected essentials, delivered with care.', image: images.hero, cta: 'Explore essentials' },
+ { eyebrow: 'READY-TO-USE COLLECTIONS', title: 'Complete pooja kits,\nbeautifully prepared', copy: 'Spend less time gathering. Make more time for what matters.', image: images.puja, cta: 'Shop pooja kits' },
+ { eyebrow: 'CELEBRATE WITH MEANING', title: 'Bring every festival\nto life at home', copy: 'Seasonal favourites for your most cherished traditions.', image: images.flowers, cta: 'Discover festivals' },
+];
 
-export default function TabOneScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
-  );
+export default function HomeScreen() {
+ const [activeSlide, setActiveSlide] = useState(0);
+ const cartCount = useCartStore(state => state.items.reduce((total, item) => total + item.quantity, 0));
+ const wishlistProducts = useWishlistStore(state => state.products);
+ const wishedIds = useMemo(() => wishlistProducts.map(product => product.id), [wishlistProducts]);
+ const { width } = useWindowDimensions();
+ const cardWidth = useMemo(() => Math.min(width - spacing.xl * 2, 440), [width]);
+ const slide = slides[activeSlide];
+ return <SafeAreaView style={s.safe} edges={['top']}><ScrollView style={s.screen} showsVerticalScrollIndicator={false} contentContainerStyle={s.content}>
+  <View style={s.top}><View style={s.brandBlock}><Text style={s.brand}>VEDIC POOJALAYA</Text><View style={s.delivery}><Feather name="map-pin" size={12} color={colors.saffron} /><Text style={s.deliveryText}>Delivering to </Text><Text style={s.city}>Hyderabad</Text><Feather name="chevron-down" size={13} color={colors.ink} /></View></View><View style={s.actions}><Pressable onPress={() => router.push('/(tabs)/wishlist')} accessibilityLabel="Wishlist" accessibilityRole="button" style={s.iconButton}><Feather name="heart" size={20} color={colors.ink} /></Pressable><Pressable onPress={() => router.push('/cart/index')} accessibilityLabel={`Cart, ${cartCount} items`} accessibilityRole="button" style={s.iconButton}><Feather name="shopping-bag" size={20} color={colors.ink} />{cartCount > 0 && <View style={s.cartBadge}><Text style={s.cartBadgeText}>{cartCount > 9 ? '9+' : cartCount}</Text></View>}</Pressable></View></View>
+  <SearchField onPress={() => router.push('/search')} />
+  <View style={[s.heroWrap, { width: cardWidth }]}><ImageBackground source={{ uri: slide.image }} style={s.hero} imageStyle={s.heroImage}><View style={s.heroShade} /><View style={s.heroContent}><Text style={s.eyebrow}>{slide.eyebrow}</Text><Text style={s.heroTitle}>{slide.title}</Text><Text style={s.heroCopy}>{slide.copy}</Text><Pressable onPress={() => activeSlide === 2 ? Alert.alert('Festival collections', 'Festival collections are coming soon. For now, explore our pooja essentials.') : router.push({ pathname: '/category/[id]', params: { id: 'essentials' } })} style={s.heroCta} accessibilityRole="button"><Text style={s.heroCtaText}>{slide.cta}</Text><Feather name="arrow-up-right" size={15} color={colors.white} /></Pressable></View></ImageBackground><View style={s.dots}>{slides.map((_, i) => <Pressable key={i} accessibilityLabel={`Show banner ${i + 1}`} onPress={() => setActiveSlide(i)} style={[s.dot, i === activeSlide && s.dotActive]} />)}</View></View>
+  <View style={s.section}><SectionHeading title="Shop by category" subtitle="The little things that make a pooja complete" action="View all" onAction={() => router.push('/(tabs)/categories')} /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.categoryRow}>{categories.slice(0, 7).map(c => <CategoryTile key={c.id} category={c} onPress={() => router.push({ pathname: '/category/[id]', params: { id: c.id } })} />)}</ScrollView></View>
+  <Pressable style={s.poojaBanner} onPress={() => router.push({ pathname: '/category/[id]', params: { id: 'essentials' } })} accessibilityRole="button"><View style={{ flex: 1 }}><Text style={s.poojaOverline}>A MOMENT FOR EVERY OCCASION</Text><Text style={s.poojaTitle}>Complete your pooja</Text><Text style={s.poojaCopy}>Ready-to-use kits, gathered with care.</Text><View style={s.textLink}><Text style={s.textLinkLabel}>Explore pooja kits</Text><Feather name="arrow-right" size={15} color={colors.maroon} /></View></View><View style={s.poojaArt}><Feather name="sun" size={43} color={colors.gold} /><View style={s.artLine} /></View></Pressable>
+  <View style={s.section}><SectionHeading title="Best sellers" subtitle="Loved by homes across Hyderabad" action="View all" onAction={() => router.push('/(tabs)/categories')} /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.productRow}>{products.slice(0, 4).map(p => <ProductCard key={p.id} product={p} wished={wishedIds.includes(p.id)} onWishlist={() => useWishlistStore.getState().toggle(p)} onPress={() => router.push(`/product/${p.id}`)} onAdd={() => useCartStore.getState().addItem(p)} />)}</ScrollView></View>
+  <View style={s.promise}><View style={s.promiseIcon}><Feather name="heart" size={18} color={colors.maroon} /></View><View style={{ flex: 1 }}><Text style={s.promiseTitle}>Pure. Sacred. Delivered.</Text><Text style={s.promiseCopy}>Thoughtfully sourced essentials, packed with care and delivered to your door.</Text></View></View>
+  <View style={s.footer}><Text style={s.footerBrand}>VEDIC POOJALAYA</Text><Text style={s.footerCopy}>Everything you need for every pooja.</Text><Text style={s.footerSmall}>Need a hand? We’re here to help.</Text></View>
+ </ScrollView></SafeAreaView>;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});
+const s = StyleSheet.create({ safe: { flex: 1, backgroundColor: colors.cream }, screen: { flex: 1, backgroundColor: colors.cream }, content: { paddingBottom: 28 }, top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingTop: 8, paddingBottom: 17 }, brandBlock: { gap: 7 }, brand: { color: colors.maroon, fontSize: 17, fontWeight: '700', letterSpacing: 1.5 }, delivery: { flexDirection: 'row', alignItems: 'center', gap: 4 }, deliveryText: { color: colors.muted, fontSize: 12 }, city: { color: colors.ink, fontSize: 12, fontWeight: '600' }, actions: { flexDirection: 'row', gap: 10 }, iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.line, position: 'relative' }, cartBadge: { position: 'absolute', minWidth: 17, height: 17, borderRadius: 9, backgroundColor: colors.maroon, right: 2, top: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }, cartBadgeText: { color: colors.white, fontSize: 9, fontWeight: '700' }, heroWrap: { alignSelf: 'center', marginTop: spacing.lg, marginBottom: spacing.xl }, hero: { height: 265, borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: colors.maroon }, heroImage: { borderRadius: radius.lg }, heroShade: { ...StyleSheet.absoluteFill, backgroundColor: colors.heroScrim }, heroContent: { padding: 22 }, eyebrow: { color: colors.paleGold, fontSize: 9, letterSpacing: 1.6, fontWeight: '700', marginBottom: 10 }, heroTitle: { color: colors.white, fontSize: 27, lineHeight: 32, fontWeight: '600', letterSpacing: -.5 }, heroCopy: { color: colors.softWhite, fontSize: 12, lineHeight: 18, marginTop: 7, maxWidth: 270 }, heroCta: { flexDirection: 'row', gap: 9, alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.maroon, borderRadius: radius.sm, paddingHorizontal: 13, height: 37, marginTop: 14 }, heroCtaText: { color: colors.white, fontSize: 11, fontWeight: '600' }, dots: { flexDirection: 'row', alignSelf: 'center', gap: 5, marginTop: 11 }, dot: { height: 5, width: 5, borderRadius: 3, backgroundColor: colors.line }, dotActive: { width: 19, backgroundColor: colors.maroon }, section: { marginTop: spacing.xl, paddingLeft: spacing.xl }, categoryRow: { paddingRight: spacing.xl }, productRow: { gap: spacing.md, paddingRight: spacing.xl }, poojaBanner: { marginHorizontal: spacing.xl, marginTop: spacing.xxl, backgroundColor: colors.warmSand, minHeight: 150, borderRadius: radius.lg, padding: spacing.lg, flexDirection: 'row', overflow: 'hidden', alignItems: 'center' }, poojaOverline: { color: colors.gold, letterSpacing: 1.05, fontSize: 9, fontWeight: '700' }, poojaTitle: { color: colors.ink, fontSize: 19, fontWeight: '600', marginTop: 8 }, poojaCopy: { color: colors.muted, fontSize: 11, marginTop: 5 }, textLink: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14 }, textLinkLabel: { color: colors.maroon, fontSize: 12, fontWeight: '600' }, poojaArt: { width: 86, height: 86, borderRadius: 43, backgroundColor: colors.ivory, justifyContent: 'center', alignItems: 'center', marginLeft: 5 }, artLine: { position: 'absolute', width: 66, height: 66, borderWidth: 1, borderColor: colors.goldLine, borderRadius: 33 }, promise: { marginHorizontal: spacing.xl, marginTop: spacing.xxl, backgroundColor: colors.paper, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: spacing.md, flexDirection: 'row', gap: 13, alignItems: 'center' }, promiseIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }, promiseTitle: { color: colors.ink, fontWeight: '600', fontSize: 14 }, promiseCopy: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 4 }, footer: { marginTop: spacing.xxl, alignItems: 'center', borderTopWidth: 1, borderColor: colors.line, marginHorizontal: spacing.xl, paddingTop: spacing.lg }, footerBrand: { color: colors.maroon, fontSize: 12, letterSpacing: 1.5, fontWeight: '700' }, footerCopy: { color: colors.muted, fontSize: 11, marginTop: 6 }, footerSmall: { color: colors.subtle, fontSize: 10, marginTop: 14 }, });

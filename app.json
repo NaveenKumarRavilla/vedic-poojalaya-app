@@ -1,22 +1,24 @@
 {
   "expo": {
-    "name": "vedic-poojalaya-app",
-    "slug": "vedic-poojalaya-app",
+    "name": "Vedic Poojalaya",
+    "slug": "vedic-poojalaya",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "vedicpoojalayaapp",
-    "userInterfaceStyle": "automatic",
+    "scheme": "vedicpoojalaya",
+    "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vedicpoojalaya.app"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FAF6EF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "com.vedicpoojalaya.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -31,7 +33,7 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#FAF6EF"
         }
       ]
     ],
